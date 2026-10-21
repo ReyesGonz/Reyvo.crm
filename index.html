@@ -1,0 +1,155 @@
+<!doctype html>
+<html lang="es"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="color-scheme" content="only light">
+<title>Reyvo CRM</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,600;0,800;1,600&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
+<style>
+:root{--bg:#f0e8d6;--paper:#faf5e8;--ink:#1b1530;--mut:#6d6580;--v:#5a2ce6;--vs:#e6defc;--ok:#1f7a4d;--okb:#d8efe1;--mid:#8a5f00;--midb:#f7e8bf;--bad:#b3261e;--badb:#f8d9d5;--line:#dcd2bb;color-scheme:light;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.5 system-ui,-apple-system,"Segoe UI",sans-serif}
+h1,h2,h3{font-family:"Playfair Display",Georgia,serif;margin:0;line-height:1.1}
+button{font:inherit;cursor:pointer;border:0;border-radius:999px;padding:.5rem 1rem;background:var(--v);color:#fff;font-weight:600}
+button.ghost{background:transparent;color:var(--ink);border:1px solid var(--line)}
+a.btn{display:inline-block;text-decoration:none;border-radius:999px;padding:.5rem 1rem;background:var(--ok);color:#fff;font-weight:600}
+button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible,a:focus-visible,summary:focus-visible{outline:3px solid var(--v);outline-offset:2px}
+input,select,textarea{font:inherit;width:100%;border:1px solid var(--line);border-radius:12px;padding:.55rem .7rem;background:#fff;color:var(--ink)}
+label{display:block;font-size:.85rem;color:var(--mut);margin:.5rem 0 .15rem}
+.wrap{max-width:1080px;margin:0 auto;padding:0 1rem 3rem}
+header{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:1rem;padding:1.5rem 0 1rem}
+.brand{font-family:"Playfair Display",serif;font-size:2rem;font-weight:800}.brand i{color:var(--v)}
+nav{display:flex;gap:.25rem;overflow-x:auto;max-width:100%}
+nav button{background:transparent;color:var(--mut);padding:.55rem 1rem}
+nav button[aria-selected=true]{background:var(--v);color:#fff}
+.hello{font-size:clamp(1.7rem,5vw,2.8rem);font-weight:800;margin:.5rem 0 1.25rem;max-width:22ch}.hello em{color:var(--v)}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:.75rem;margin-bottom:1.25rem}
+.stat{background:var(--paper);border:1px solid var(--line);border-radius:18px;padding:.9rem 1.1rem}
+.stat b{display:block;font-family:"Playfair Display",serif;font-size:1.8rem}.stat span{color:var(--mut);font-size:.9rem}
+.panel{background:var(--paper);border:1px solid var(--line);border-radius:18px;padding:.8rem 1rem;margin-bottom:1rem}
+.panel summary{cursor:pointer;font-weight:700}
+.grid2{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:.6rem}
+.cols{display:grid;grid-template-columns:repeat(3,1fr);gap:1rem}
+.col{background:rgba(255,255,255,.35);border-radius:22px;padding:.9rem;min-height:120px}
+.col h3{font-size:1.25rem;margin-bottom:.75rem}.col h3 small{font:600 .9rem system-ui;color:var(--mut)}
+.card{background:var(--paper);border:1px solid var(--line);border-radius:16px;padding:.8rem;margin-bottom:.6rem}
+.card p{margin:.1rem 0;color:var(--mut);font-size:.9rem}
+.row{display:flex;gap:.4rem;flex-wrap:wrap;margin-top:.6rem}.row button,.row a.btn{padding:.35rem .8rem;font-size:.85rem}
+.camp{background:var(--paper);border:1px solid var(--line);border-radius:20px;padding:1.1rem;margin-bottom:.8rem;display:grid;grid-template-columns:1fr auto;gap:.5rem 1rem;align-items:center}
+.camp h3{font-size:1.3rem}.nums,.act{grid-column:1/-1;margin:0}.nums{color:var(--mut);font-size:.92rem}.nums b{color:var(--ink)}
+.tag{font-weight:700;border-radius:999px;padding:.35rem .9rem;font-size:.9rem}
+.sirve{background:var(--okb);color:var(--ok)}.regular{background:var(--midb);color:var(--mid)}.baja{background:var(--badb);color:var(--bad)}
+.inbox{display:grid;grid-template-columns:280px 1fr;gap:1rem}
+.list button{display:block;width:100%;text-align:left;background:var(--paper);color:var(--ink);border:1px solid var(--line);border-radius:16px;margin-bottom:.5rem;padding:.7rem .9rem;font-weight:400}
+.list button[aria-pressed=true]{border-color:var(--v);background:var(--vs)}.list small{display:block;color:var(--mut)}
+.thread{background:var(--paper);border:1px solid var(--line);border-radius:22px;padding:1rem;display:flex;flex-direction:column;min-height:420px}
+.msgs{flex:1;display:flex;flex-direction:column;gap:.5rem;margin:.8rem 0}
+.b{max-width:80%;padding:.55rem .9rem;border-radius:16px;background:#fff;border:1px solid var(--line);white-space:pre-wrap}
+.b.me{align-self:flex-end;background:var(--v);color:#fff;border-color:var(--v)}
+.ideas{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:1rem;margin-bottom:1rem}
+.idea{background:var(--paper);border:1px solid var(--line);border-radius:20px;padding:1.1rem}
+.idea h3{font-size:1.25rem;margin:.4rem 0}.idea p{margin:0;color:var(--mut)}.fmt{font-weight:700;color:var(--v);font-size:.9rem}
+.empty{color:var(--mut);padding:.5rem}
+.auth{max-width:420px;margin:8vh auto;background:var(--paper);border:1px solid var(--line);border-radius:24px;padding:1.6rem}
+.auth h1{font-size:2.2rem;margin-bottom:.4rem}.auth p{color:var(--mut);margin:.2rem 0 1rem}
+#toast{position:fixed;left:50%;bottom:calc(1.2rem + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--ink);color:#fff;padding:.6rem 1.1rem;border-radius:999px;display:none;max-width:90vw;z-index:9}
+@media(max-width:760px){.cols,.inbox{grid-template-columns:1fr}.b{max-width:92%}}
+</style></head>
+<body>
+<div class="wrap" id="app"></div><div id="toast" role="status"></div>
+<script>
+const SB_URL="https://lfdcsgjhgjjzogynlmdt.supabase.co",SB_KEY="sb_publishable_kN2DFCAZ0memCMyhyUoxsA_0kHkToNO";
+const sb=supabase.createClient(SB_URL,SB_KEY);
+const $=id=>document.getElementById(id),val=id=>$(id).value.trim();
+const fmt=n=>"$"+Math.round(n||0).toLocaleString("es-MX");
+const esc=s=>String(s==null?"":s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const S={org:null,stages:[],pros:[],camps:[],msgs:[],tab:"Leads",sel:null,ideaPos:0};
+const tabs=["Leads","Campañas","Mensajes","Ideas"],channels=["WhatsApp","Instagram","Facebook","Otro"];
+let tt;function toast(m){const t=$("toast");t.textContent=m;t.style.display="block";clearTimeout(tt);tt=setTimeout(()=>t.style.display="none",3500)}
+const ok=(r,m)=>{if(r.error){toast(m||r.error.message);return false}return true};
+function wa(p,text){let d=(p||"").replace(/\D/g,"");if(d.length==10)d="52"+d;return d?`https://wa.me/${d}${text?"?text="+encodeURIComponent(text):""}`:""}
+
+/* ---------- Auth ---------- */
+function drawAuth(msg){$("app").innerHTML=`<div class="auth"><div class="brand">Reyvo<i>.</i> CRM</div><h1>Entra a tu CRM</h1><p>${esc(msg||"Tus leads, campañas y mensajes en un solo lugar.")}</p>
+<label for="em">Correo</label><input id="em" type="email" autocomplete="email"><label for="pw">Contraseña (mínimo 6)</label><input id="pw" type="password" autocomplete="current-password">
+<label for="wn">Nombre de tu negocio (solo al crear cuenta)</label><input id="wn" autocomplete="organization">
+<div class="row"><button id="login">Entrar</button><button class="ghost" id="signup">Crear cuenta</button></div></div>`}
+async function auth(kind){const email=val("em"),password=$("pw").value;if(!email||password.length<6)return toast("Escribe tu correo y una contraseña de al menos 6 caracteres");
+ try{localStorage.setItem("ws_name",val("wn"))}catch(e){}
+ const r=kind=="signup"?await sb.auth.signUp({email,password}):await sb.auth.signInWithPassword({email,password});
+ if(!ok(r))return;if(!r.data.session)return drawAuth("Te mandamos un correo para confirmar tu cuenta. Confírmala y luego entra.");start()}
+async function start(){let n="";try{n=localStorage.getItem("ws_name")||""}catch(e){}
+ const r=await sb.rpc("create_workspace",{workspace_name:n});if(!ok(r))return drawAuth();S.org=r.data;await load()}
+
+/* ---------- Datos ---------- */
+async function load(){const o=S.org,q=t=>sb.from(t).select("*").eq("organization_id",o);
+ const [st,pr,ca]=await Promise.all([q("pipeline_stages").order("position"),q("prospects").order("created_at",{ascending:false}),q("campaigns").order("created_at")]);
+ if(!ok(st)||!ok(pr)||!ok(ca))return;S.stages=st.data;S.pros=pr.data;S.camps=ca.data;if(S.tab=="Mensajes"&&S.sel)await loadMsgs();draw()}
+async function loadMsgs(){const r=await sb.from("messages").select("*").eq("prospect_id",S.sel).order("created_at");S.msgs=r.data||[]}
+const lastStage=()=>S.stages[S.stages.length-1];
+const cstats=c=>{const L=S.pros.filter(p=>p.campaign===c.name);return{l:L.length,v:L.filter(p=>p.status=="won").length}};
+function verdict(c){const{l,v}=cstats(c),cps=v?c.spend/v:Infinity;
+ if(!l&&!v)return["regular","Sin datos","Aún no hay leads con este nombre de campaña. Al capturar un lead, elige esta campaña."];
+ if(v&&cps<=400)return["sirve","Sirve",`Cada venta te cuesta ${fmt(cps)}. Súbele presupuesto poco a poco.`];
+ if(v&&cps<=900)return["regular","Regular",`Cada venta te cuesta ${fmt(cps)}. Prueba otro mensaje o imagen antes de gastar más.`];
+ return["baja","Baja",v?`Cada venta te cuesta ${fmt(cps)}. Pausa o cambia la oferta.`:`${fmt(c.spend)} gastados y cero ventas. Pausa y reutiliza el presupuesto.`]}
+
+/* ---------- Vistas ---------- */
+function stats(){const w=S.pros.filter(p=>p.status=="won"),a=S.pros.filter(p=>p.status=="active"),x=S.pros.filter(p=>p.status=="lost");
+ return`<div class="stats"><div class="stat"><b>${fmt(w.reduce((t,p)=>t+Number(p.value),0))}</b><span>vendido</span></div><div class="stat"><b>${a.length}</b><span>leads por atender</span></div><div class="stat"><b>${w.length}</b><span>clientes cerrados</span></div><div class="stat"><b>${x.length}</b><span>perdidos</span></div></div>`}
+function vLeads(){const first=S.stages[0],n=S.pros.filter(p=>p.stage_id==(first&&first.id)&&p.status=="active").length;
+ const opts=(arr,f)=>arr.map(f).join("");
+ return`<h1 class="hello">${n?`Hoy tienes <em>${n} leads nuevos</em> esperando respuesta.`:`Empieza <em>agregando tu primer lead.</em>`}</h1>${stats()}
+<details class="panel"${S.pros.length?"":" open"}><summary>Agregar lead</summary><div class="grid2"><div><label for="ln">Nombre</label><input id="ln"></div><div><label for="lw">WhatsApp</label><input id="lw" inputmode="tel" placeholder="55 1234 5678"></div>
+<div><label for="ls">Canal</label><select id="ls">${opts(channels,c=>`<option>${c}</option>`)}</select></div>
+<div><label for="lc">Campaña</label><select id="lc"><option value="">Sin campaña</option>${opts(S.camps,c=>`<option>${esc(c.name)}</option>`)}</select></div>
+<div><label for="lv">Valor estimado (MXN)</label><input id="lv" type="number" min="0" value="0"></div></div>
+<div class="row"><button id="addlead">Guardar lead</button><button class="ghost" id="csvbtn">Importar CSV</button><input id="csv" type="file" accept=".csv" hidden></div>
+<p class="empty">CSV con columnas: nombre,whatsapp,canal,campaña,valor</p></details>
+<div class="cols">`+S.stages.map((s,i)=>{const L=S.pros.filter(p=>p.stage_id==s.id&&p.status!="lost"&&p.status!="archived"),end=i==S.stages.length-1;
+ return`<section class="col" aria-label="${esc(s.name)}"><h3>${esc(s.name)} <small>${L.length}</small></h3>`+(L.length?L.map(p=>`<div class="card"><strong>${esc(p.name)}</strong><p>${esc(p.source||"")}${p.campaign?" · "+esc(p.campaign):""}</p><p>${fmt(p.value)}</p><div class="row">${end?"":`<button data-adv="${p.id}">${i==S.stages.length-2?"Marcar cerró":"Pasar a "+esc(S.stages[i+1].name)}</button><button class="ghost" data-lost="${p.id}">Perdido</button>`}<button class="ghost" data-chat="${p.id}">Chat</button></div></div>`).join(""):`<p class="empty">Nada por aquí.</p>`)+`</section>`}).join("")+`</div>`}
+function vCamps(){const ranked=S.camps.map(c=>({c,s:cstats(c)})).filter(x=>x.s.v).sort((a,b)=>a.c.spend/a.s.v-b.c.spend/b.s.v),b=ranked[0];
+ return`<h1 class="hello">${b?`Tu mejor campaña: <em>${esc(b.c.name)}</em>.`:`Registra tus campañas <em>y sabrás cuáles sirven.</em>`}</h1>
+<details class="panel"${S.camps.length?"":" open"}><summary>Agregar campaña</summary><div class="grid2"><div><label for="cn">Nombre (igual que en tus leads)</label><input id="cn"></div><div><label for="cs">Canal</label><select id="cs">${channels.map(c=>`<option>${c}</option>`).join("")}</select></div><div><label for="cg">Gasto total (MXN)</label><input id="cg" type="number" min="0" value="0"></div></div><div class="row"><button id="addcamp">Guardar campaña</button></div></details>`+
+ (S.camps.length?S.camps.map(c=>{const[k,t,a]=verdict(c),s=cstats(c);return`<article class="camp"><h3>${esc(c.name)}</h3><span class="tag ${k}">${t}</span><p class="nums">Gastaste <b>${fmt(c.spend)}</b> · <b>${s.l}</b> leads · <b>${s.v}</b> ventas</p><p class="act">${a}</p><div class="row"><button class="ghost" data-spend="${c.id}">Cambiar gasto</button><button class="ghost" data-delc="${c.id}">Eliminar</button></div></article>`}).join(""):`<p class="empty">Aún no hay campañas.</p>`)}
+function vMsgs(){const p=S.pros.find(x=>x.id==S.sel)||S.pros[0];if(p&&!S.sel)S.sel=p.id;
+ if(!p)return`<h1 class="hello">Aquí vivirán <em>tus conversaciones.</em></h1><p class="empty">Agrega un lead para empezar.</p>`;
+ return`<h1 class="hello">Todos tus mensajes, <em>en un solo lugar.</em></h1><div class="inbox"><div class="list">`+S.pros.filter(x=>x.status!="archived").map(x=>`<button aria-pressed="${x.id==S.sel}" data-sel="${x.id}"><b>${esc(x.name)}</b><small>${esc(x.source||"")}</small></button>`).join("")+
+ `</div><div class="thread"><h3>${esc(p.name)}</h3><small>${esc(p.source||"")}${p.campaign?" · "+esc(p.campaign):""}</small><div class="msgs">`+(S.msgs.length?S.msgs.map(m=>`<div class="b ${m.direction=="out"?"me":""}">${esc(m.body)}</div>`).join(""):`<p class="empty">Sin mensajes todavía.</p>`)+
+ `</div><textarea id="reply" aria-label="Mensaje" placeholder="Escribe o pega el mensaje…"></textarea><div class="row"><button data-save="out">Guardar como enviado</button><button class="ghost" data-save="in">Guardar como recibido</button><button class="ghost" id="ai">Sugerir respuesta</button>${wa(p.whatsapp)?`<a class="btn" id="walink" target="_blank" rel="noopener" href="${wa(p.whatsapp)}">Abrir WhatsApp</a>`:""}</div></div></div>`}
+const ideasAll=[["Reel","Antes y después de la mesa","Muestra el lugar vacío y luego lleno en 10 segundos. Lo visual sobre una promo suele traer más mensajes."],["Historia","Encuesta: ¿qué pedimos hoy?","Las preguntas rápidas generan respuestas por mensaje, y cada respuesta es un posible lead."],["Carrusel","3 razones para reservar hoy","Cierra con “Escríbenos por WhatsApp”. Los mensajes directos dan la conversación más cercana a la venta."],["Reel","Un día detrás del mostrador","Contenido humano genera confianza antes de la primera charla."],["Publicación","Tu producto estrella con precio","Quien pregunta “¿cuánto cuesta?” ya casi compra. Responde antes de que pregunten."],["Historia","Cuenta regresiva de tu promo","Recuerda la oferta con 24 horas de anticipación para subir las respuestas."]];
+function vIdeas(){const ranked=S.camps.map(c=>({c,s:cstats(c)})).filter(x=>x.s.v).sort((a,b)=>a.c.spend/a.s.v-b.c.spend/b.s.v),b=ranked[0],pick=[0,1,2].map(i=>ideasAll[(S.ideaPos+i)%ideasAll.length]);
+ return`<h1 class="hello">${b?`Ideas parecidas a <em>${esc(b.c.name)}</em>, lo que ya te funciona.`:`Ideas para <em>generar más mensajes.</em>`}</h1><div class="ideas">`+pick.map(([f,t,w])=>`<article class="idea"><span class="fmt">${f}</span><h3>${t}</h3><p>${w}</p></article>`).join("")+`</div><button id="more">Dame otras 3</button>`}
+function draw(){$("app").innerHTML=`<header><div class="brand">Reyvo<i>.</i> CRM</div><nav role="tablist">${tabs.map(t=>`<button role="tab" aria-selected="${t==S.tab}" data-tab="${t}">${t}</button>`).join("")}<button class="ghost" id="out">Salir</button></nav></header><main>${{Leads:vLeads,Campañas:vCamps,Mensajes:vMsgs,Ideas:vIdeas}[S.tab]()}</main>`}
+
+/* ---------- Acciones ---------- */
+const sugg=[n=>`¡Hola ${n}! Gracias por escribirnos 🙌 ¿En qué te podemos ayudar?`,n=>`${n}, te mando los detalles y te guardo tu lugar. ¿Te lo confirmo?`,n=>`¡Gracias por tu compra, ${n}! Si nos recomiendas con un amigo, les damos una cortesía 🎁`];
+async function addLead(){const name=val("ln");if(!name)return toast("Escribe el nombre del lead");
+ const r=await sb.from("prospects").insert({organization_id:S.org,stage_id:S.stages[0].id,name,whatsapp:val("lw")||null,source:$("ls").value,campaign:$("lc").value||null,value:Number($("lv").value)||0});if(ok(r))load()}
+async function adv(id){const p=S.pros.find(x=>x.id==id),i=S.stages.findIndex(s=>s.id==p.stage_id),n=S.stages[i+1];if(!n)return;
+ const won=n.id==lastStage().id;const r=await sb.from("prospects").update({stage_id:n.id,status:won?"won":"active",last_contact_at:new Date().toISOString()}).eq("id",id);if(ok(r))load()}
+async function lost(id){const r=await sb.from("prospects").update({status:"lost"}).eq("id",id);if(ok(r))load()}
+async function addCamp(){const name=val("cn");if(!name)return toast("Escribe el nombre de la campaña");
+ const r=await sb.from("campaigns").insert({organization_id:S.org,name,channel:$("cs").value,spend:Number($("cg").value)||0});if(ok(r))load()}
+async function spend(id){const c=S.camps.find(x=>x.id==id),v=prompt("Gasto total en MXN",c.spend);if(v===null)return;const r=await sb.from("campaigns").update({spend:Number(v)||0}).eq("id",id);if(ok(r))load()}
+async function delCamp(id){if(!confirm("¿Eliminar esta campaña? Los leads se quedan."))return;const r=await sb.from("campaigns").delete().eq("id",id);if(ok(r))load()}
+async function saveMsg(dir){const body=val("reply");if(!body)return;const p=S.pros.find(x=>x.id==S.sel);
+ const r=await sb.from("messages").insert({organization_id:S.org,prospect_id:S.sel,direction:dir,channel:p.source,body});if(ok(r)){await loadMsgs();draw()}}
+async function importCsv(file){const rows=(await file.text()).split(/\r?\n/).filter(Boolean).slice(1).map(l=>l.split(",").map(x=>x.trim()));
+ const data=rows.filter(r=>r[0]).map(r=>({organization_id:S.org,stage_id:S.stages[0].id,name:r[0],whatsapp:r[1]||null,source:r[2]||"Otro",campaign:r[3]||null,value:Number(r[4])||0}));
+ if(!data.length)return toast("El CSV no tiene filas válidas");const r=await sb.from("prospects").insert(data);if(ok(r)){toast(`${data.length} leads importados`);load()}}
+document.addEventListener("click",async e=>{const d=e.target.closest("button");if(!d)return;const D=d.dataset,id=d.id;
+ if(D.tab){S.tab=D.tab;if(S.tab=="Mensajes"&&S.sel)await loadMsgs();draw()}
+ else if(D.adv)adv(D.adv);else if(D.lost)lost(D.lost);else if(D.spend)spend(D.spend);else if(D.delc)delCamp(D.delc);
+ else if(D.chat){S.sel=D.chat;S.tab="Mensajes";await loadMsgs();draw()}
+ else if(D.sel){S.sel=D.sel;await loadMsgs();draw()}
+ else if(D.save)saveMsg(D.save);
+ else if(id=="addlead")addLead();else if(id=="addcamp")addCamp();else if(id=="csvbtn")$("csv").click();
+ else if(id=="more"){S.ideaPos+=3;draw()}
+ else if(id=="ai"){const p=S.pros.find(x=>x.id==S.sel),i=Math.min(S.stages.findIndex(s=>s.id==p.stage_id),2);$("reply").value=sugg[Math.max(i,0)](p.name.split(" ")[0])}
+ else if(id=="login")auth("login");else if(id=="signup")auth("signup");
+ else if(id=="out"){await sb.auth.signOut();S.org=null;drawAuth()}});
+document.addEventListener("change",e=>{if(e.target.id=="csv"&&e.target.files[0])importCsv(e.target.files[0])});
+(async()=>{const{data}=await sb.auth.getSession();data.session?start():drawAuth()})();
+</script></body></html>
