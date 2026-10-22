@@ -64,8 +64,8 @@ const sb=supabase.createClient(SB_URL,SB_KEY);
 const $=id=>document.getElementById(id),val=id=>$(id).value.trim();
 const fmt=n=>"$"+Math.round(n||0).toLocaleString("es-MX");
 const esc=s=>String(s==null?"":s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
-const S={org:null,stages:[],pros:[],camps:[],msgs:[],tab:"Leads",sel:null,ideaPos:0};
-const tabs=["Leads","Campañas","Mensajes","Ideas"],channels=["WhatsApp","Instagram","Facebook","Otro"];
+const S={key:"",org:null,stages:[],pros:[],camps:[],msgs:[],tab:"Leads",sel:null,ideaPos:0};
+const tabs=["Leads","Campañas","Mensajes","Ideas","Conectar"],channels=["WhatsApp","Instagram","Facebook","Otro"];
 let tt;function toast(m){const t=$("toast");t.textContent=m;t.style.display="block";clearTimeout(tt);tt=setTimeout(()=>t.style.display="none",3500)}
 const ok=(r,m)=>{if(r.error){toast(m||r.error.message);return false}return true};
 function wa(p,text){let d=(p||"").replace(/\D/g,"");if(d.length==10)d="52"+d;return d?`https://wa.me/${d}${text?"?text="+encodeURIComponent(text):""}`:""}
@@ -85,7 +85,7 @@ async function start(){let n="";try{n=localStorage.getItem("ws_name")||""}catch(
 /* ---------- Datos ---------- */
 async function load(){const o=S.org,q=t=>sb.from(t).select("*").eq("organization_id",o);
  const [st,pr,ca]=await Promise.all([q("pipeline_stages").order("position"),q("prospects").order("created_at",{ascending:false}),q("campaigns").order("created_at")]);
- if(!ok(st)||!ok(pr)||!ok(ca))return;S.stages=st.data;S.pros=pr.data;S.camps=ca.data;if(S.tab=="Mensajes"&&S.sel)await loadMsgs();draw()}
+ if(!ok(st)||!ok(pr)||!ok(ca))return;S.stages=st.data;S.pros=pr.data;S.camps=ca.data;const og=await sb.from("organizations").select("capture_key").eq("id",o).maybeSingle();if(og.data)S.key=og.data.capture_key;if(S.tab=="Mensajes"&&S.sel)await loadMsgs();draw()}
 async function loadMsgs(){const r=await sb.from("messages").select("*").eq("prospect_id",S.sel).order("created_at");S.msgs=r.data||[]}
 const lastStage=()=>S.stages[S.stages.length-1];
 const cstats=c=>{const L=S.pros.filter(p=>p.campaign===c.name);return{l:L.length,v:L.filter(p=>p.status=="won").length}};
@@ -101,7 +101,7 @@ function stats(){const w=S.pros.filter(p=>p.status=="won"),a=S.pros.filter(p=>p.
 function vLeads(){const first=S.stages[0],n=S.pros.filter(p=>p.stage_id==(first&&first.id)&&p.status=="active").length;
  const opts=(arr,f)=>arr.map(f).join("");
  return`<h1 class="hello">${n?`Hoy tienes <em>${n} leads nuevos</em> esperando respuesta.`:`Empieza <em>agregando tu primer lead.</em>`}</h1>${stats()}
-<details class="panel"${S.pros.length?"":" open"}><summary>Agregar lead</summary><div class="grid2"><div><label for="ln">Nombre</label><input id="ln"></div><div><label for="lw">WhatsApp</label><input id="lw" inputmode="tel" placeholder="55 1234 5678"></div>
+${hoy()}<details class="panel"${S.pros.length?"":" open"}><summary>Agregar lead</summary><div class="grid2"><div><label for="ln">Nombre</label><input id="ln"></div><div><label for="lw">WhatsApp</label><input id="lw" inputmode="tel" placeholder="55 1234 5678"></div>
 <div><label for="ls">Canal</label><select id="ls">${opts(channels,c=>`<option>${c}</option>`)}</select></div>
 <div><label for="lc">Campaña</label><select id="lc"><option value="">Sin campaña</option>${opts(S.camps,c=>`<option>${esc(c.name)}</option>`)}</select></div>
 <div><label for="lv">Valor estimado (MXN)</label><input id="lv" type="number" min="0" value="0"></div></div>
@@ -121,8 +121,39 @@ function vMsgs(){const p=S.pros.find(x=>x.id==S.sel)||S.pros[0];if(p&&!S.sel)S.s
 const ideasAll=[["Reel","Antes y después de la mesa","Muestra el lugar vacío y luego lleno en 10 segundos. Lo visual sobre una promo suele traer más mensajes."],["Historia","Encuesta: ¿qué pedimos hoy?","Las preguntas rápidas generan respuestas por mensaje, y cada respuesta es un posible lead."],["Carrusel","3 razones para reservar hoy","Cierra con “Escríbenos por WhatsApp”. Los mensajes directos dan la conversación más cercana a la venta."],["Reel","Un día detrás del mostrador","Contenido humano genera confianza antes de la primera charla."],["Publicación","Tu producto estrella con precio","Quien pregunta “¿cuánto cuesta?” ya casi compra. Responde antes de que pregunten."],["Historia","Cuenta regresiva de tu promo","Recuerda la oferta con 24 horas de anticipación para subir las respuestas."]];
 function vIdeas(){const ranked=S.camps.map(c=>({c,s:cstats(c)})).filter(x=>x.s.v).sort((a,b)=>a.c.spend/a.s.v-b.c.spend/b.s.v),b=ranked[0],pick=[0,1,2].map(i=>ideasAll[(S.ideaPos+i)%ideasAll.length]);
  return`<h1 class="hello">${b?`Ideas parecidas a <em>${esc(b.c.name)}</em>, lo que ya te funciona.`:`Ideas para <em>generar más mensajes.</em>`}</h1><div class="ideas">`+pick.map(([f,t,w])=>`<article class="idea"><span class="fmt">${f}</span><h3>${t}</h3><p>${w}</p></article>`).join("")+`</div><button id="more">Dame otras 3</button>`}
-function draw(){$("app").innerHTML=`<header><div class="brand">Reyvo<i>.</i> CRM</div><nav role="tablist">${tabs.map(t=>`<button role="tab" aria-selected="${t==S.tab}" data-tab="${t}">${t}</button>`).join("")}<button class="ghost" id="out">Salir</button></nav></header><main>${{Leads:vLeads,Campañas:vCamps,Mensajes:vMsgs,Ideas:vIdeas}[S.tab]()}</main>`}
+function draw(){$("app").innerHTML=`<header><div class="brand">Reyvo<i>.</i> CRM</div><nav role="tablist">${tabs.map(t=>`<button role="tab" aria-selected="${t==S.tab}" data-tab="${t}">${t}</button>`).join("")}<button class="ghost" id="out">Salir</button></nav></header><main>${{Leads:vLeads,Campañas:vCamps,Mensajes:vMsgs,Ideas:vIdeas,Conectar:vConectar}[S.tab]()}</main>`}
 
+function hoy(){const A=[],h=n=>Date.now()-n*36e5,first=S.stages[0]&&S.stages[0].id,end=lastStage()&&lastStage().id;
+ const nv=S.pros.filter(p=>p.status=="active"&&p.stage_id==first&&new Date(p.created_at)<h(24)).length;
+ if(nv)A.push(`${nv} lead${nv>1?"s":""} nuevo${nv>1?"s":""} sin avanzar desde hace más de un día. Escríbeles hoy.`);
+ const ch=S.pros.filter(p=>p.status=="active"&&p.stage_id!=first&&p.stage_id!=end&&new Date(p.last_contact_at||p.created_at)<h(72)).length;
+ if(ch)A.push(`${ch} lead${ch>1?"s":""} en charla sin movimiento hace 3 días. Dales seguimiento.`);
+ S.camps.forEach(c=>{const v=verdict(c);if(v[0]=="baja"&&c.spend>0)A.push(`Revisa «${esc(c.name)}»: ${v[2]}`)});
+ return`<div class="panel"><h3>Qué hacer hoy</h3>${A.length?`<ul>${A.slice(0,4).map(a=>`<li>${a}</li>`).join("")}</ul>`:`<p class="empty">Todo al día. Buen trabajo 🎉</p>`}</div>`}
+function snip(){return`<form id="reyvo-form">
+  <input name="nombre" placeholder="Tu nombre" required>
+  <input name="whatsapp" placeholder="Tu WhatsApp" inputmode="tel" required>
+  <input name="web" style="display:none" tabindex="-1" autocomplete="off">
+  <button>Quiero información</button>
+</form>
+<script>
+document.getElementById('reyvo-form').addEventListener('submit',async function(e){
+  e.preventDefault();var f=e.target;if(f.web.value)return;
+  var q=new URLSearchParams(location.search);
+  try{
+    var r=await fetch('${SB_URL}/rest/v1/rpc/capture_lead',{method:'POST',
+      headers:{'Content-Type':'application/json',apikey:'${SB_KEY}'},
+      body:JSON.stringify({p_key:'${S.key}',p_name:f.nombre.value,p_whatsapp:f.whatsapp.value,
+        p_source:q.get('utm_source')||'Landing',p_campaign:q.get('utm_campaign')})});
+    if(!r.ok)throw 0;
+    f.innerHTML='¡Gracias! Te escribimos muy pronto.';
+  }catch(x){alert('No pudimos enviar tus datos, intenta otra vez.')}
+});
+<\/script>`}
+function vConectar(){return`<h1 class="hello">Conecta tu landing <em>y los leads llegan solos.</em></h1>
+<div class="panel"><h3>1. Pega este código en tu landing</h3><p class="empty">Funciona en cualquier página. Cada persona que llene el formulario aparece en Leads al instante.</p><pre style="white-space:pre-wrap;word-break:break-all;background:#fff;border:1px solid var(--line);border-radius:12px;padding:.8rem;font-size:.8rem;max-height:320px;overflow:auto">${esc(snip())}</pre><div class="row"><button id="copysnip">Copiar código</button></div></div>
+<div class="panel"><h3>2. Rastrea tus campañas</h3><p>En el link de cada anuncio agrega <b>?utm_campaign=NombreDeLaCampaña</b>. Usa el mismo nombre que registraste en Campañas y el CRM sabrá solo cuáles traen ventas.</p></div>
+<div class="panel"><h3>Tu llave</h3><p class="empty">Va en el código público de tu landing y solo sirve para agregar leads, nunca para leer datos: ${esc(S.key)}</p></div>`}
 /* ---------- Acciones ---------- */
 const sugg=[n=>`¡Hola ${n}! Gracias por escribirnos 🙌 ¿En qué te podemos ayudar?`,n=>`${n}, te mando los detalles y te guardo tu lugar. ¿Te lo confirmo?`,n=>`¡Gracias por tu compra, ${n}! Si nos recomiendas con un amigo, les damos una cortesía 🎁`];
 async function addLead(){const name=val("ln");if(!name)return toast("Escribe el nombre del lead");
@@ -148,6 +179,7 @@ document.addEventListener("click",async e=>{const d=e.target.closest("button");i
  else if(id=="addlead")addLead();else if(id=="addcamp")addCamp();else if(id=="csvbtn")$("csv").click();
  else if(id=="more"){S.ideaPos+=3;draw()}
  else if(id=="ai"){const p=S.pros.find(x=>x.id==S.sel),i=Math.min(S.stages.findIndex(s=>s.id==p.stage_id),2);$("reply").value=sugg[Math.max(i,0)](p.name.split(" ")[0])}
+ else if(id=="copysnip"){navigator.clipboard.writeText(snip()).then(()=>toast("Código copiado"),()=>toast("No pude copiar, selecciona el código a mano"))}
  else if(id=="login")auth("login");else if(id=="signup")auth("signup");
  else if(id=="out"){await sb.auth.signOut();S.org=null;drawAuth()}});
 document.addEventListener("change",e=>{if(e.target.id=="csv"&&e.target.files[0])importCsv(e.target.files[0])});
